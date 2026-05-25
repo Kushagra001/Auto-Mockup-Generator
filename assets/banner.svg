@@ -1,0 +1,68 @@
+<svg width="800" height="200" viewBox="0 0 800 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes glow {
+      0% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+      100% { opacity: 0.3; }
+    }
+    .banner-bg {
+      background: linear-gradient(-45deg, #0f0c20, #1b103c, #06020f, #130a24);
+      background-size: 400% 400%;
+      animation: gradientShift 15s infinite ease;
+    }
+    .pulsing-glow-1 {
+      fill: #FF6464;
+      opacity: 0.15;
+      animation: glow 8s infinite ease-in-out;
+    }
+    .pulsing-glow-2 {
+      fill: #FFE15D;
+      opacity: 0.15;
+      animation: glow 6s infinite ease-in-out;
+    }
+    .text-title {
+      font-family: 'system-ui', -apple-system, sans-serif;
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+    .text-subtitle {
+      font-family: 'system-ui', -apple-system, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      fill: #98D8AA;
+      letter-spacing: 4px;
+      opacity: 0.9;
+    }
+  </style>
+
+  <rect width="800" height="200" rx="12" class="banner-bg"/>
+  
+  <!-- Subtle Grid Overlay -->
+  <g opacity="0.1">
+    <path d="M0 40 H800 M0 80 H800 M0 120 H800 M0 160 H800" stroke="#FFFFFF" stroke-width="1"/>
+    <path d="M80 0 V200 M160 0 V200 M240 0 V200 M320 0 V200 M400 0 V200 M480 0 V200 M560 0 V200 M640 0 V200 M720 0 V200" stroke="#FFFFFF" stroke-width="1"/>
+  </g>
+
+  <circle cx="100" cy="100" r="150" class="pulsing-glow-1" filter="blur(40px)"/>
+  <circle cx="700" cy="100" r="120" class="pulsing-glow-2" filter="blur(40px)"/>
+
+  <!-- Linear gradient for text -->
+  <defs>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFE15D"/>
+      <stop offset="50%" stop-color="#FF6464"/>
+      <stop offset="100%" stop-color="#FFE15D"/>
+    </linearGradient>
+  </defs>
+
+  <text x="50%" y="95" fill="url(#textGrad)" class="text-title" text-anchor="middle">AUTO-MOCKUP-GENERATOR</text>
+  <text x="50%" y="135" class="text-subtitle" text-anchor="middle">DYNAMIC BRAND-THEMED PRESENTATION PIPELINE</text>
+  
+  <path d="M150 160 L650 160" stroke="rgba(255,255,255,0.15)" stroke-width="2" stroke-dasharray="10 5"/>
+</svg>
