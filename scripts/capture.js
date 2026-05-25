@@ -134,11 +134,103 @@ async function captureViewport(browser, url, vpW, vpH, dpr, slug, prefix, outDir
       sections.push(secPath);
     }
 
+    const title = await page.title().catch(() => 'Untitled Page');
     const palette = await extractPaletteFromPage(page);
-    return { hero: heroPath, full: fullPath, sections, palette };
+    return { hero: heroPath, full: fullPath, sections, palette, title };
   } finally {
     await context.close();
   }
+}
+
+// ─── Crawler Helpers ─────────────────────────────────────────────────────────
+
+async function discoverLinks(browser, url) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  try {
+    await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+    await waitForPageReady(page);
+    
+    const links = await page.evaluate(() => {
+      const origin = window.location.origin;
+      return Array.from(document.querySelectorAll('a'))
+        .map(a => a.href)
+        .filter(href => href && href.startsWith(origin))
+        .map(href => {
+          try {
+            const u = new URL(href);
+            return u.origin + u.pathname.replace(/\/$/, '');
+          } catch (_) {
+            return null;
+          }
+        })
+        .filter(Boolean);
+    });
+    return Array.from(new Set(links));
+  } catch (err) {
+    console.error('  [Crawler] Link discovery failed:', err.message);
+    return [];
+  } finally {
+    await context.close();
+  }
+}
+
+function getPageSlug(urlStr, initialUrlStr) {
+  try {
+    const initialUrl = new URL(initialUrlStr);
+    const targetUrl = new URL(urlStr);
+    
+    const initialPath = initialUrl.pathname.replace(/\/$/, '');
+    const targetPath = targetUrl.pathname.replace(/\/$/, '');
+    
+    if (targetPath === initialPath || targetPath === '' || targetPath === '/') {
+      return '';
+    }
+    
+    const cleaned = targetUrl.pathname.replace(/^\/|\/$/g, '');
+    return cleaned.replace(/\//g, '_') || 'page';
+  } catch (_) {
+    return 'page';
+  }
+}
+
+function filterAndDeduplicateLinks(links, initialUrl) {
+  const ignoredPatterns = ['/cart', '/checkout', '/search', '/login', '/signup', '/account', '/privacy', '/terms', '/rules', '/api'];
+  
+  // 1. Filter out utility paths
+  const filtered = links.filter(link => {
+    try {
+      const pathname = new URL(link).pathname.toLowerCase();
+      return !ignoredPatterns.some(pat => pathname.includes(pat));
+    } catch (_) {
+      return false;
+    }
+  });
+
+  // 2. Dynamic template deduplication (e.g. only keep 1 product or 1 collection layout showcase)
+  const finalLinks = [];
+  const patternsSeen = new Map();
+  
+  for (const link of filtered) {
+    try {
+      const urlObj = new URL(link);
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
+      
+      if (pathParts.length >= 2) {
+        const parentPattern = pathParts[0].toLowerCase();
+        if (['product', 'products', 'collection', 'collections', 'p', 'c'].includes(parentPattern)) {
+          const count = patternsSeen.get(parentPattern) || 0;
+          if (count >= 1) {
+            continue;
+          }
+          patternsSeen.set(parentPattern, count + 1);
+        }
+      }
+      finalLinks.push(link);
+    } catch (_) {}
+  }
+  
+  return finalLinks;
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -148,19 +240,61 @@ async function captureScreenshots(url, outDir, slug) {
   const browser = await chromium.launch(launchOpts);
 
   try {
-    const [laptopResult, mobileResult] = await Promise.all([
-      captureViewport(browser, url, 1440, 900, 2, slug, 'laptop', outDir, 6),
-      captureViewport(browser, url, 390,  844, 3, slug, 'mobile', outDir, 4),
-    ]);
+    // 1. Discover links from the homepage
+    const discovered = await discoverLinks(browser, url);
+    const filteredLinks = filterAndDeduplicateLinks(discovered, url);
+    
+    // Ensure homepage is first
+    const finalLinks = [url];
+    for (const link of filteredLinks) {
+      if (link.replace(/\/$/, '') !== url.replace(/\/$/, '') && finalLinks.length < 6) {
+        finalLinks.push(link);
+      }
+    }
 
-    return {
-      laptopHero:     laptopResult.hero,
-      laptopFull:     laptopResult.full,
-      laptopSections: laptopResult.sections,
-      mobileHero:     mobileResult.hero,
-      mobileSections: mobileResult.sections,
-      palette:        laptopResult.palette,
-    };
+    console.log(`\n  [Crawl] Found ${discovered.length} same-origin links. Deduplicated to ${finalLinks.length} key pages.`);
+    finalLinks.forEach((link, idx) => {
+      console.log(`    ${idx + 1}. ${link}`);
+    });
+
+    const pagesResult = [];
+
+    // 2. Sequential multi-page capture loop
+    for (let i = 0; i < finalLinks.length; i++) {
+      const targetUrl = finalLinks[i];
+      const pageSlug = getPageSlug(targetUrl, url);
+      const isHome = pageSlug === '';
+      const displaySlug = isHome ? 'home' : pageSlug;
+
+      console.log(`\n  [Capture] Page ${i + 1}/${finalLinks.length}: ${targetUrl} (${displaySlug})`);
+
+      const laptopPrefix = isHome ? 'laptop' : `${pageSlug}_laptop`;
+      const mobilePrefix = isHome ? 'mobile' : `${pageSlug}_mobile`;
+
+      const laptopMaxSec = isHome ? 6 : 4;
+      const mobileMaxSec = isHome ? 4 : 2;
+
+      try {
+        const laptopResult = await captureViewport(browser, targetUrl, 1440, 900, 2, slug, laptopPrefix, outDir, laptopMaxSec);
+        const mobileResult = await captureViewport(browser, targetUrl, 390,  844, 3, slug, mobilePrefix, outDir, mobileMaxSec);
+
+        pagesResult.push({
+          url:            targetUrl,
+          pageSlug:       pageSlug,
+          title:          laptopResult.title || 'Untitled Page',
+          laptopHero:     laptopResult.hero,
+          laptopFull:     laptopResult.full,
+          laptopSections: laptopResult.sections,
+          mobileHero:     mobileResult.hero,
+          mobileSections: mobileResult.sections,
+          palette:        laptopResult.palette,
+        });
+      } catch (pageErr) {
+        console.error(`  ✗ Capture failed for ${targetUrl}: ${pageErr.message}`);
+      }
+    }
+
+    return pagesResult;
   } finally {
     await browser.close();
   }

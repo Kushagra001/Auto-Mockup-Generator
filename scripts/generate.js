@@ -118,92 +118,134 @@ async function main() {
 
   // ── STEP 1: Screenshots ──────────────────────────────────────────────────
   stepLog(1, 'Capturing screenshots');
-  const spinner1 = ora({ text: 'Launching browser…', color: 'cyan', spinner: 'dots' }).start();
-  let shots;
+  const spinner1 = ora({ text: 'Launching browser and crawling…', color: 'cyan', spinner: 'dots' }).start();
+  let pagesResult;
   try {
-    shots = await captureScreenshots(url, screenshotsDir, slug);
-    spinner1.succeed(chalk.green(`Captured ${2 + shots.laptopSections.length + shots.mobileSections.length} screenshots`));
+    pagesResult = await captureScreenshots(url, screenshotsDir, slug);
+    spinner1.succeed(chalk.green(`Captured screenshots for ${pagesResult.length} pages`));
   } catch (err) {
     spinner1.fail(chalk.red('Screenshot capture failed'));
     console.error(chalk.red('  Error: ' + err.message));
     throw err;
   }
 
-  // Build options including the dynamically extracted brand color palette
-  const palette = shots.palette;
-  const opts = { name, tagline, features, deliverables, theme, slug, date, palette };
+  // Use the homepage's palette as the base brand palette for brand consistency
+  const homePage = pagesResult.find(p => p.pageSlug === '') || pagesResult[0];
+  const brandPalette = homePage.palette;
 
-  // ── STEP 2: Device frame compositing ────────────────────────────────────
-  stepLog(2, 'Compositing device frames');
-  const spinner2 = ora({ text: 'Rendering frames…', color: 'cyan', spinner: 'dots' }).start();
-  const laptopMockup = path.join(mockupsDir, `${slug}_laptop_mockup.png`);
-  const mobileMockup = path.join(mockupsDir, `${slug}_mobile_mockup.png`);
-  const dualMockup   = path.join(mockupsDir, `${slug}_dual_mockup.png`);
-  try {
-    await compositeIntoFrame(shots.laptopHero, 'laptop', laptopMockup);
-    await compositeIntoFrame(shots.mobileHero, 'mobile', mobileMockup);
-    await createDualMockup(laptopMockup, mobileMockup, dualMockup);
-    spinner2.succeed(chalk.green('Device mockups created'));
-  } catch (err) {
-    spinner2.fail(chalk.red('Compositing failed'));
-    console.error(chalk.red('  Error: ' + err.message));
-    throw err;
-  }
+  // Track all generated mockups for output summary
+  const summaryFiles = [];
 
-  // ── STEP 3: Cover boards ─────────────────────────────────────────────────
-  stepLog(3, 'Generating cover boards');
-  const spinner3 = ora({ text: 'Building cover SVG…', color: 'cyan', spinner: 'dots' }).start();
-  const coverLight = path.join(mockupsDir, `${slug}_cover_light.png`);
-  const coverDark  = path.join(mockupsDir, `${slug}_cover_dark.png`);
-  try {
-    await generateCover({ ...opts, theme: 'light' }, laptopMockup, mobileMockup, coverLight);
-    await generateCover({ ...opts, theme: 'dark'  }, laptopMockup, mobileMockup, coverDark);
-    spinner3.succeed(chalk.green('Cover boards rendered (light + dark)'));
-  } catch (err) {
-    spinner3.fail(chalk.red('Cover generation failed'));
-    console.error(chalk.red('  Error: ' + err.message));
-    throw err;
-  }
+  // Loop over discovered pages
+  for (let pIdx = 0; pIdx < pagesResult.length; pIdx++) {
+    const pageRes = pagesResult[pIdx];
+    const pageSlug = pageRes.pageSlug;
+    const pageUrl = pageRes.url;
+    const isHome = pageSlug === '';
+    const displaySlug = isHome ? 'home' : pageSlug;
 
-  // ── STEP 4: Individual section mockup boards ──────────────────────────────
-  stepLog(4, 'Generating individual section mockups');
-  const spinner4 = ora({ text: 'Generating section mockups…', color: 'cyan', spinner: 'dots' }).start();
-  let sectionsGenerated = 0;
-  const maxSecToGenerate = Math.max(shots.laptopSections.length, shots.mobileSections.length);
-  
-  try {
-    if (maxSecToGenerate > 0) {
-      const totalSections = maxSecToGenerate;
-      for (let i = 1; i <= totalSections; i++) {
-        const laptopSecPath = shots.laptopSections[i - 1] || null;
-        const mobileSecPath = shots.mobileSections[i - 1] || null;
-        
-        const sectionLightPath = path.join(mockupsDir, `${slug}_section_${i}_light.png`);
-        const sectionDarkPath  = path.join(mockupsDir, `${slug}_section_${i}_dark.png`);
-        
-        await generateSectionMockup({ ...opts, theme: 'light', totalSections }, i, laptopSecPath, mobileSecPath, sectionLightPath);
-        await generateSectionMockup({ ...opts, theme: 'dark',  totalSections }, i, laptopSecPath, mobileSecPath, sectionDarkPath);
-        sectionsGenerated++;
-      }
-      spinner4.succeed(chalk.green(`Generated ${sectionsGenerated} responsive section mockups (both light & dark)`));
-    } else {
-      spinner4.warn(chalk.yellow('No section screenshots captured. Skipped individual section mockups.'));
+    console.log(chalk.bold.magenta(`\n  ══════════════════════════════════════════════════`));
+    console.log(chalk.bold.magenta(`  PAGE ${pIdx + 1}/${pagesResult.length}: ${displaySlug.toUpperCase()} (${pageUrl})`));
+    console.log(chalk.bold.magenta(`  ══════════════════════════════════════════════════`));
+
+    const suffix = isHome ? '' : `_${pageSlug}`;
+    const pageName = isHome ? name : `${name} · ${pageSlug.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
+    const pageTagline = isHome ? tagline : `Premium interface for the ${pageSlug.replace(/_/g, ' ')} section of ${name}.`;
+
+    // Construct the options for cover and section boards
+    // Keep consistent palette across all slides
+    const opts = { 
+      name: pageName, 
+      tagline: pageTagline, 
+      features, 
+      deliverables, 
+      theme, 
+      slug, 
+      date, 
+      palette: brandPalette 
+    };
+
+    // ── STEP 2: Device frame compositing ────────────────────────────────────
+    stepLog(2, `Compositing device frames for ${displaySlug}`);
+    const spinner2 = ora({ text: 'Rendering frames…', color: 'cyan', spinner: 'dots' }).start();
+    const laptopMockup = path.join(mockupsDir, `${slug}${suffix}_laptop_mockup.png`);
+    const mobileMockup = path.join(mockupsDir, `${slug}${suffix}_mobile_mockup.png`);
+    const dualMockup   = path.join(mockupsDir, `${slug}${suffix}_dual_mockup.png`);
+    try {
+      await compositeIntoFrame(pageRes.laptopHero, 'laptop', laptopMockup);
+      await compositeIntoFrame(pageRes.mobileHero, 'mobile', mobileMockup);
+      await createDualMockup(laptopMockup, mobileMockup, dualMockup);
+      spinner2.succeed(chalk.green(`Device mockups created for ${displaySlug}`));
+      summaryFiles.push([`${displaySlug.toUpperCase()} Laptop Mockup`, `${slug}${suffix}_laptop_mockup.png`]);
+      summaryFiles.push([`${displaySlug.toUpperCase()} Mobile Mockup`, `${slug}${suffix}_mobile_mockup.png`]);
+      summaryFiles.push([`${displaySlug.toUpperCase()} Dual Mockup`,   `${slug}${suffix}_dual_mockup.png`]);
+    } catch (err) {
+      spinner2.fail(chalk.red(`Compositing failed for ${displaySlug}`));
+      console.error(chalk.red('  Error: ' + err.message));
+      throw err;
     }
-  } catch (err) {
-    spinner4.fail(chalk.red('Section mockups generation failed: ' + err.message));
-  }
 
-  // ── STEP 5: Social crops ─────────────────────────────────────────────────
-  stepLog(5, 'Creating social crops');
-  const spinner5 = ora({ text: 'Cropping…', color: 'cyan', spinner: 'dots' }).start();
-  const ogPath    = path.join(mockupsDir, `${slug}_og_1200x630.png`);
-  const thumbPath = path.join(mockupsDir, `${slug}_thumb_800x800.png`);
-  try {
-    await cropCenter(coverLight, 1200, 630, ogPath);
-    await cropCenter(coverLight, 800,  800, thumbPath);
-    spinner5.succeed(chalk.green('OG image (1200×630) and thumbnail (800×800) created'));
-  } catch (err) {
-    spinner5.fail(chalk.red('Social crops failed: ' + err.message));
+    // ── STEP 3: Cover boards ─────────────────────────────────────────────────
+    stepLog(3, `Generating cover boards for ${displaySlug}`);
+    const spinner3 = ora({ text: 'Building cover SVG…', color: 'cyan', spinner: 'dots' }).start();
+    const coverLight = path.join(mockupsDir, `${slug}${suffix}_cover_light.png`);
+    const coverDark  = path.join(mockupsDir, `${slug}${suffix}_cover_dark.png`);
+    try {
+      await generateCover({ ...opts, theme: 'light' }, laptopMockup, mobileMockup, coverLight);
+      await generateCover({ ...opts, theme: 'dark'  }, laptopMockup, mobileMockup, coverDark);
+      spinner3.succeed(chalk.green(`Cover boards rendered for ${displaySlug} (light + dark)`));
+      summaryFiles.push([`${displaySlug.toUpperCase()} Cover Light`, `${slug}${suffix}_cover_light.png`]);
+      summaryFiles.push([`${displaySlug.toUpperCase()} Cover Dark`,  `${slug}${suffix}_cover_dark.png`]);
+    } catch (err) {
+      spinner3.fail(chalk.red(`Cover generation failed for ${displaySlug}`));
+      console.error(chalk.red('  Error: ' + err.message));
+      throw err;
+    }
+
+    // ── STEP 4: Individual section mockup boards ──────────────────────────────
+    stepLog(4, `Generating individual section mockups for ${displaySlug}`);
+    const spinner4 = ora({ text: 'Generating section mockups…', color: 'cyan', spinner: 'dots' }).start();
+    let sectionsGenerated = 0;
+    const maxSecToGenerate = Math.max(pageRes.laptopSections.length, pageRes.mobileSections.length);
+    
+    try {
+      if (maxSecToGenerate > 0) {
+        const totalSections = maxSecToGenerate;
+        for (let i = 1; i <= totalSections; i++) {
+          const laptopSecPath = pageRes.laptopSections[i - 1] || null;
+          const mobileSecPath = pageRes.mobileSections[i - 1] || null;
+          
+          const sectionLightPath = path.join(mockupsDir, `${slug}${suffix}_section_${i}_light.png`);
+          const sectionDarkPath  = path.join(mockupsDir, `${slug}${suffix}_section_${i}_dark.png`);
+          
+          await generateSectionMockup({ ...opts, theme: 'light', totalSections }, i, laptopSecPath, mobileSecPath, sectionLightPath);
+          await generateSectionMockup({ ...opts, theme: 'dark',  totalSections }, i, laptopSecPath, mobileSecPath, sectionDarkPath);
+          sectionsGenerated++;
+          summaryFiles.push([`${displaySlug.toUpperCase()} Section ${i} Light`, `${slug}${suffix}_section_${i}_light.png`]);
+          summaryFiles.push([`${displaySlug.toUpperCase()} Section ${i} Dark`,  `${slug}${suffix}_section_${i}_dark.png`]);
+        }
+        spinner4.succeed(chalk.green(`Generated ${sectionsGenerated} responsive section mockups for ${displaySlug} (both light & dark)`));
+      } else {
+        spinner4.warn(chalk.yellow(`No section screenshots captured for ${displaySlug}. Skipped section mockups.`));
+      }
+    } catch (err) {
+      spinner4.fail(chalk.red(`Section mockups generation failed for ${displaySlug}: ` + err.message));
+    }
+
+    // ── STEP 5: Social crops ─────────────────────────────────────────────────
+    stepLog(5, `Creating social crops for ${displaySlug}`);
+    const spinner5 = ora({ text: 'Cropping…', color: 'cyan', spinner: 'dots' }).start();
+    const ogPath    = path.join(mockupsDir, `${slug}${suffix}_og_1200x630.png`);
+    const thumbPath = path.join(mockupsDir, `${slug}${suffix}_thumb_800x800.png`);
+    try {
+      await cropCenter(coverLight, 1200, 630, ogPath);
+      await cropCenter(coverLight, 800,  800, thumbPath);
+      spinner5.succeed(chalk.green(`OG image (1200×630) and thumbnail (800×800) created for ${displaySlug}`));
+      summaryFiles.push([`${displaySlug.toUpperCase()} OG 1200x630`, `${slug}${suffix}_og_1200x630.png`]);
+      summaryFiles.push([`${displaySlug.toUpperCase()} Thumb 800x800`, `${slug}${suffix}_thumb_800x800.png`]);
+    } catch (err) {
+      spinner5.fail(chalk.red(`Social crops failed for ${displaySlug}: ` + err.message));
+    }
   }
 
   // ── STEP 6: ZIP packaging ────────────────────────────────────────────────
@@ -222,27 +264,13 @@ async function main() {
   console.log('\n' + chalk.bold.white('  ╔══════════════════════════════════════════╗'));
   console.log(chalk.bold.white('  ║               OUTPUT SUMMARY              ║'));
   console.log(chalk.bold.white('  ╚══════════════════════════════════════════╝'));
-  const files = [
-    ['Laptop Mockup',     `${slug}_laptop_mockup.png`],
-    ['Mobile Mockup',     `${slug}_mobile_mockup.png`],
-    ['Dual Mockup',       `${slug}_dual_mockup.png`],
-    ['Cover Light',       `${slug}_cover_light.png`],
-    ['Cover Dark',        `${slug}_cover_dark.png`],
-  ];
-  for (let i = 1; i <= sectionsGenerated; i++) {
-    files.push([`Section ${i} Light`, `${slug}_section_${i}_light.png`]);
-    files.push([`Section ${i} Dark`,  `${slug}_section_${i}_dark.png`]);
-  }
-  files.push(
-    ['OG Image 1200×630', `${slug}_og_1200x630.png`],
-    ['Thumb 800×800',     `${slug}_thumb_800x800.png`]
-  );
-  for (const [label, file] of files) {
+  
+  for (const [label, file] of summaryFiles) {
     const full = path.join(mockupsDir, file);
     const exists = fs.existsSync(full);
     const sizeMB = exists ? (fs.statSync(full).size / 1024 / 1024).toFixed(1) + ' MB' : '—';
     const icon = exists ? chalk.green('✓') : chalk.red('✗');
-    console.log(`  ${icon}  ${chalk.gray(label.padEnd(22))} ${chalk.white(sizeMB)}`);
+    console.log(`  ${icon}  ${chalk.gray(label.padEnd(30))} ${chalk.white(sizeMB)}`);
   }
   console.log(`\n  ${chalk.cyan('📦')} ZIP: ${chalk.white(zipPath)}`);
   console.log(`  ${chalk.cyan('📁')} Run: ${chalk.white(runDir)}\n`);

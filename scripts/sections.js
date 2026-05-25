@@ -70,8 +70,8 @@ async function generateSectionMockup(opts, sectionIdx, laptopPath, mobilePath, o
       mobileFramed = true;
     }
 
-    if (!laptopFramed) {
-      throw new Error(`Laptop section screenshot not found: ${laptopPath}`);
+    if (!laptopFramed && !mobileFramed) {
+      throw new Error(`Neither laptop nor mobile section screenshot was found for this section.`);
     }
 
     // ── Grid background lines ───────────────────────────────────────────────
