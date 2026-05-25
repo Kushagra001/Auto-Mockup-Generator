@@ -1,0 +1,16 @@
+node_modules/
+output/
+.tmp/
+.env
+.env.local
+.env.*.local
+.DS_Store
+CVS
+.svn
+.hg
+.lock-wscript
+.npmrc
+.pypirc
+.netrc
+.git-credentials
+C:\Users\kusha\.gemini\antigravity

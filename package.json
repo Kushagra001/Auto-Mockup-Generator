@@ -1,0 +1,21 @@
+{
+  "name": "mockup-pipeline",
+  "version": "1.0.0",
+  "description": "Automated premium portfolio mockup generation pipeline",
+  "main": "scripts/generate.js",
+  "scripts": {
+    "generate": "node scripts/generate.js",
+    "test": "node scripts/generate.js --url \"file:///c:/Users/kusha/OneDrive/Desktop/Project Mockups Pipeline/test-site/index.html\" --name \"TestProject\" --tagline \"A local test of the premium mockup pipeline.\" --theme light"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "chalk": "^4.1.2",
+    "ora": "^5.4.1",
+    "playwright": "^1.44.0",
+    "sharp": "^0.33.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}

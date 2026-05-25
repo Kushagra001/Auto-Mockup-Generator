@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nexus — AI-Powered Collaboration Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #08090d;
+      --surface:    #111218;
+      --border:     rgba(255,255,255,0.06);
+      --accent:     #7c5cfc;
+      --accent2:    #00d4ff;
+      --text:       #f0f0f5;
+      --muted:      #6b6e7e;
+      --card:       #13141c;
+      --glow:       rgba(124,92,252,0.25);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 60px;
+      height: 72px;
+      background: rgba(8,9,13,0.72);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #7c5cfc, #00d4ff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500;
+                   transition: color 0.2s; letter-spacing: 0.2px; }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      display: flex; gap: 12px; align-items: center;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 14px;
+      cursor: pointer; text-decoration: none; transition: all 0.2s; border: none;
+      letter-spacing: 0.2px;
+    }
+    .btn-ghost {
+      background: transparent; color: var(--muted); border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7c5cfc, #5a3fd6);
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(124,92,252,0.4);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(124,92,252,0.5); }
+
+    /* ── HERO ─────────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 40px 80px;
+      position: relative; overflow: hidden;
+    }
+
+    .hero::before {
+      content: ''; position: absolute;
+      width: 800px; height: 800px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,92,252,0.15) 0%, transparent 70%);
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: ''; position: absolute;
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);
+      top: 30%; left: 70%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 100px;
+      background: rgba(124,92,252,0.12); border: 1px solid rgba(124,92,252,0.3);
+      font-size: 13px; font-weight: 600; color: #a080ff;
+      margin-bottom: 32px; letter-spacing: 0.5px;
+    }
+    .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #7c5cfc;
+                      box-shadow: 0 0 8px #7c5cfc; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+    h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(52px, 6vw, 88px);
+      font-weight: 800; line-height: 1.05; letter-spacing: -2px;
+      margin-bottom: 28px;
+      background: linear-gradient(160deg, #ffffff 0%, #c0b8e8 60%, #7c5cfc 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 20px; color: var(--muted); max-width: 580px;
+      line-height: 1.7; margin-bottom: 48px; font-weight: 400;
+    }
+
+    .hero-actions {
+      display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 72px;
+    }
+    .btn-large { padding: 16px 36px; font-size: 16px; border-radius: 14px; }
+
+    /* Social proof */
+    .hero-proof {
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap; justify-content: center;
+    }
+    .avatars { display: flex; }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid var(--bg);
+      background: linear-gradient(135deg, #7c5cfc, #00d4ff);
+      margin-left: -10px; font-size: 14px; font-weight: 700; color: white;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .avatars .avatar:first-child { margin-left: 0; }
+    .proof-text { font-size: 14px; color: var(--muted); }
+    .proof-text strong { color: var(--text); }
+
+    /* ── METRICS BAR ─────────────────────────────────────────────────── */
+    .metrics {
+      background: var(--surface); border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 60px;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    }
+    .metric {
+      text-align: center; padding: 24px;
+      border-right: 1px solid var(--border);
+    }
+    .metric:last-child { border-right: none; }
+    .metric-value {
+      font-size: 52px; font-weight: 800; letter-spacing: -2px;
+      background: linear-gradient(135deg, #7c5cfc, #00d4ff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .metric-label { font-size: 14px; color: var(--muted); font-weight: 500; letter-spacing: 0.5px; }
+
+    /* ── FEATURES ─────────────────────────────────────────────────────── */
+    section { padding: 120px 60px; }
+
+    .section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 4px;
+      color: #7c5cfc; text-transform: uppercase; margin-bottom: 20px;
+    }
+    h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(36px, 4vw, 60px);
+      font-weight: 800; letter-spacing: -1.5px; line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    .section-sub { font-size: 18px; color: var(--muted); max-width: 540px; line-height: 1.7; margin-bottom: 64px; }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 36px;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .feature-card:hover { border-color: rgba(124,92,252,0.4); transform: translateY(-4px); }
+
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: linear-gradient(135deg, rgba(124,92,252,0.2), rgba(0,212,255,0.1));
+      border: 1px solid rgba(124,92,252,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 20px;
+    }
+    .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .feature-card p { font-size: 15px; color: var(--muted); line-height: 1.65; }
+
+    /* ── SHOWCASE ─────────────────────────────────────────────────────── */
+    .showcase { background: var(--surface); }
+    .showcase-inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+      align-items: center;
+    }
+    .showcase-visual {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 24px; padding: 40px; min-height: 480px;
+      display: flex; flex-direction: column; gap: 20px;
+      position: relative; overflow: hidden;
+    }
+    .showcase-visual::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(124,92,252,0.05), transparent);
+    }
+    .mock-ui-bar { height: 12px; border-radius: 6px; background: rgba(255,255,255,0.06); }
+    .mock-ui-bar.wide { width: 70%; }
+    .mock-ui-bar.medium { width: 45%; }
+    .mock-ui-bar.short { width: 30%; }
+    .mock-ui-card {
+      background: rgba(124,92,252,0.08); border: 1px solid rgba(124,92,252,0.15);
+      border-radius: 12px; padding: 20px; display: flex; gap: 14px; align-items: center;
+    }
+    .mock-avatar { width: 40px; height: 40px; border-radius: 10px;
+                   background: linear-gradient(135deg, #7c5cfc, #00d4ff); flex-shrink: 0; }
+    .mock-text { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .mock-text-line { height: 10px; border-radius: 5px; background: rgba(255,255,255,0.08); }
+    .mock-chart {
+      display: flex; align-items: flex-end; gap: 8px;
+      height: 100px; background: rgba(255,255,255,0.02);
+      border-radius: 12px; padding: 12px;
+    }
+    .bar {
+      flex: 1; border-radius: 6px;
+      background: linear-gradient(180deg, #7c5cfc, rgba(124,92,252,0.2));
+    }
+
+    .showcase-text h2 { margin-bottom: 24px; }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 18px; margin-top: 32px; }
+    .feature-list li {
+      display: flex; gap: 12px; align-items: flex-start;
+      font-size: 15px; color: var(--muted);
+    }
+    .check { color: #7c5cfc; font-size: 18px; margin-top: 1px; flex-shrink: 0; }
+
+    /* ── PRICING ─────────────────────────────────────────────────────── */
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .price-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 24px; padding: 40px;
+    }
+    .price-card.featured {
+      background: linear-gradient(160deg, rgba(124,92,252,0.15), rgba(0,212,255,0.05));
+      border-color: rgba(124,92,252,0.4);
+      position: relative; overflow: hidden;
+    }
+    .price-badge {
+      display: inline-block; padding: 4px 14px; border-radius: 100px;
+      background: linear-gradient(135deg, #7c5cfc, #5a3fd6);
+      font-size: 12px; font-weight: 700; color: white; margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+    .price-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .price-val {
+      font-size: 52px; font-weight: 800; letter-spacing: -2px; margin-bottom: 8px;
+    }
+    .price-period { font-size: 16px; color: var(--muted); margin-bottom: 32px; }
+    .price-features { list-style: none; display: flex; flex-direction: column; gap: 14px;
+                      margin-bottom: 36px; }
+    .price-features li { display: flex; gap: 10px; font-size: 14px; color: var(--muted); }
+
+    /* ── TESTIMONIALS ─────────────────────────────────────────────────── */
+    .testimonials { background: var(--surface); }
+    .testimonial-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .testimonial-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px;
+    }
+    .testimonial-text { font-size: 16px; color: var(--muted); line-height: 1.7;
+                        margin-bottom: 24px; font-style: italic; }
+    .testimonial-author { display: flex; align-items: center; gap: 12px; }
+    .tav { width: 42px; height: 42px; border-radius: 50%;
+           background: linear-gradient(135deg, #7c5cfc, #00d4ff);
+           display: flex; align-items: center; justify-content: center;
+           font-weight: 800; font-size: 15px; }
+    .tav-name { font-weight: 700; font-size: 14px; }
+    .tav-role { font-size: 13px; color: var(--muted); }
+    .stars { color: #ffd60a; margin-bottom: 16px; font-size: 16px; }
+
+    /* ── CTA SECTION ─────────────────────────────────────────────────── */
+    .cta-section {
+      text-align: center; padding: 160px 60px;
+      background: linear-gradient(180deg, var(--bg) 0%, rgba(124,92,252,0.05) 50%, var(--bg) 100%);
+    }
+    .cta-section h2 { max-width: 700px; margin: 0 auto 24px; }
+    .cta-section p { max-width: 480px; margin: 0 auto 48px; color: var(--muted); font-size: 18px; }
+    .cta-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── FOOTER ─────────────────────────────────────────────────────── */
+    footer {
+      padding: 60px; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-logo { font-size: 18px; font-weight: 800;
+                   background: linear-gradient(135deg, #7c5cfc, #00d4ff);
+                   -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; }
+    .footer-links a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="logo">Nexus</div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#showcase">Platform</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#testimonials">Reviews</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="#" class="btn btn-ghost">Sign in</a>
+      <a href="#" class="btn btn-primary">Get started</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Now in public beta · Trusted by 12,000+ teams
+    </div>
+    <h1>Collaborate at<br/>the speed of thought</h1>
+    <p class="hero-sub">Nexus brings AI-powered project management, real-time collaboration, and intelligent insights into one beautifully unified workspace.</p>
+    <div class="hero-actions">
+      <a href="#" class="btn btn-primary btn-large">Start for free</a>
+      <a href="#" class="btn btn-ghost btn-large">Watch demo →</a>
+    </div>
+    <div class="hero-proof">
+      <div class="avatars">
+        <div class="avatar">A</div>
+        <div class="avatar">B</div>
+        <div class="avatar">C</div>
+        <div class="avatar">D</div>
+        <div class="avatar">+</div>
+      </div>
+      <p class="proof-text"><strong>12,400+</strong> teams already ship faster with Nexus</p>
+    </div>
+  </section>
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-value">3.2×</div>
+      <div class="metric-label">Faster project delivery</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">98%</div>
+      <div class="metric-label">Customer satisfaction</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">12k+</div>
+      <div class="metric-label">Active teams worldwide</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">40%</div>
+      <div class="metric-label">Reduction in meetings</div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <section id="features">
+    <p class="section-label">Core Features</p>
+    <h2>Everything your team needs</h2>
+    <p class="section-sub">From sprint planning to real-time co-editing, Nexus handles the complexity so you can focus on building.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3>AI Task Intelligence</h3>
+        <p>Automatically prioritize, assign, and estimate tasks based on your team's velocity and project history.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Real-time Collaboration</h3>
+        <p>Co-edit documents, code, and designs simultaneously. See cursor positions, edits, and comments live.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Advanced Analytics</h3>
+        <p>Deep velocity charts, burndown graphs, and predictive forecasting that learn from your team over time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔗</div>
+        <h3>250+ Integrations</h3>
+        <p>Connect GitHub, Figma, Slack, Notion, Linear, and 245 more tools with one-click setup and zero config.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Enterprise Security</h3>
+        <p>SOC 2 Type II, GDPR compliant, SSO, audit logs, and granular permissions for every role in your org.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3>Nexus Copilot</h3>
+        <p>Your AI team member that writes meeting summaries, generates tickets from PRDs, and drafts update emails.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Showcase -->
+  <section id="showcase" class="showcase">
+    <div class="showcase-inner">
+      <div class="showcase-visual">
+        <div class="mock-ui-bar wide"></div>
+        <div class="mock-ui-bar medium"></div>
+        <div class="mock-ui-card">
+          <div class="mock-avatar"></div>
+          <div class="mock-text">
+            <div class="mock-text-line" style="width:80%"></div>
+            <div class="mock-text-line" style="width:55%"></div>
+          </div>
+        </div>
+        <div class="mock-ui-card">
+          <div class="mock-avatar" style="background: linear-gradient(135deg, #00d4ff, #7c5cfc)"></div>
+          <div class="mock-text">
+            <div class="mock-text-line" style="width:65%"></div>
+            <div class="mock-text-line" style="width:40%"></div>
+          </div>
+        </div>
+        <div class="mock-chart">
+          <div class="bar" style="height:45%"></div>
+          <div class="bar" style="height:62%"></div>
+          <div class="bar" style="height:78%"></div>
+          <div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:90%"></div>
+          <div class="bar" style="height:70%"></div>
+          <div class="bar" style="height:85%"></div>
+          <div class="bar" style="height:95%"></div>
+        </div>
+      </div>
+      <div class="showcase-text">
+        <p class="section-label">Intelligent Platform</p>
+        <h2>Work smarter, not harder</h2>
+        <p class="section-sub">Nexus learns your team's patterns and helps you work in flow — not against it.</p>
+        <ul class="feature-list">
+          <li><span class="check">◆</span>AI-generated sprint plans from your backlog in seconds</li>
+          <li><span class="check">◆</span>Smart notifications that surface only what matters right now</li>
+          <li><span class="check">◆</span>Automated standups and retrospective reports</li>
+          <li><span class="check">◆</span>Cross-team dependency mapping and risk alerts</li>
+          <li><span class="check">◆</span>One-click project health scores with actionable fixes</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing">
+    <p class="section-label">Pricing</p>
+    <h2>Simple, transparent pricing</h2>
+    <p class="section-sub" style="margin-bottom: 64px;">No hidden fees. Start free, scale when you're ready.</p>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-name">Starter</div>
+        <div class="price-val">$0</div>
+        <div class="price-period">Free forever · up to 5 users</div>
+        <ul class="price-features">
+          <li><span class="check">✓</span> Up to 5 team members</li>
+          <li><span class="check">✓</span> 20 projects</li>
+          <li><span class="check">✓</span> Basic analytics</li>
+          <li><span class="check">✓</span> 5 GB storage</li>
+          <li><span class="check">✓</span> Community support</li>
+        </ul>
+        <a href="#" class="btn btn-ghost" style="width:100%; justify-content:center;">Get started free</a>
+      </div>
+      <div class="price-card featured">
+        <div class="price-badge">Most Popular</div>
+        <div class="price-name">Pro</div>
+        <div class="price-val" style="background: linear-gradient(135deg, #7c5cfc, #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">$29</div>
+        <div class="price-period">per user / month · billed annually</div>
+        <ul class="price-features">
+          <li><span class="check">✓</span> Unlimited team members</li>
+          <li><span class="check">✓</span> Unlimited projects</li>
+          <li><span class="check">✓</span> AI Copilot access</li>
+          <li><span class="check">✓</span> Advanced analytics</li>
+          <li><span class="check">✓</span> 100 GB storage</li>
+          <li><span class="check">✓</span> Priority support</li>
+        </ul>
+        <a href="#" class="btn btn-primary" style="width:100%; justify-content:center;">Start Pro trial</a>
+      </div>
+      <div class="price-card">
+        <div class="price-name">Enterprise</div>
+        <div class="price-val">Custom</div>
+        <div class="price-period">Annual contract · volume discounts</div>
+        <ul class="price-features">
+          <li><span class="check">✓</span> Everything in Pro</li>
+          <li><span class="check">✓</span> SSO &amp; SAML</li>
+          <li><span class="check">✓</span> SOC 2 &amp; GDPR compliance</li>
+          <li><span class="check">✓</span> Unlimited storage</li>
+          <li><span class="check">✓</span> Dedicated success manager</li>
+          <li><span class="check">✓</span> SLA 99.99% uptime</li>
+        </ul>
+        <a href="#" class="btn btn-ghost" style="width:100%; justify-content:center;">Talk to sales</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section id="testimonials" class="testimonials">
+    <p class="section-label">Testimonials</p>
+    <h2>Loved by engineering teams</h2>
+    <p class="section-sub" style="margin-bottom: 64px;">Don't take our word for it. Here's what our users have to say.</p>
+    <div class="testimonial-grid">
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"Nexus completely transformed how our team of 40 engineers works. Sprint planning went from 3 hours to 20 minutes. The AI suggestions are genuinely intelligent."</p>
+        <div class="testimonial-author">
+          <div class="tav">SK</div>
+          <div>
+            <div class="tav-name">Sarah Kim</div>
+            <div class="tav-role">VP Engineering · Stripe</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"I was skeptical of another PM tool, but Nexus is different. The real-time collaboration and AI Copilot are genuinely magical. We shipped 40% more features last quarter."</p>
+        <div class="testimonial-author">
+          <div class="tav" style="background: linear-gradient(135deg, #00d4ff, #5a3fd6)">MR</div>
+          <div>
+            <div class="tav-name">Marcus Reyes</div>
+            <div class="tav-role">CTO · Acme Labs</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"After trying Jira, Linear, Notion, and Asana — Nexus is the first tool that actually feels built for how developers think. The analytics alone are worth it."</p>
+        <div class="testimonial-author">
+          <div class="tav" style="background: linear-gradient(135deg, #ff6b6b, #7c5cfc)">JP</div>
+          <div>
+            <div class="tav-name">Jess Park</div>
+            <div class="tav-role">Staff Engineer · Figma</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2>Ready to ship faster?</h2>
+    <p>Join 12,400+ teams that trust Nexus to power their engineering workflows.</p>
+    <div class="cta-actions">
+      <a href="#" class="btn btn-primary btn-large">Start free — no credit card</a>
+      <a href="#" class="btn btn-ghost btn-large">Schedule a demo</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-logo">Nexus</div>
+    <p class="footer-copy">© 2025 Nexus Technologies Inc. All rights reserved.</p>
+    <div class="footer-links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Security</a>
+      <a href="#">Status</a>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,43 @@
+[
+  {
+    "name": "impeccable",
+    "capabilities": ["audit_ui","polish_ui","critique_design","craft_feature","animate_ui","harden_ui"],
+    "tags": ["design","frontend","quality"],
+    "install_method": "prebuilt-bundle",
+    "invoke": "/impeccable <command>",
+    "imported_at": "2026-05-25"
+  },
+  {
+    "name": "caveman",
+    "capabilities": ["compress_tokens","terse_mode","caveman_mode"],
+    "tags": ["tokens","efficiency","communication"],
+    "install_method": "git-clone",
+    "invoke": "/caveman [lite|full|ultra]",
+    "imported_at": "2026-05-25"
+  },
+  {
+    "name": "design-extract",
+    "capabilities": ["extract_design_system","grade_design","clone_site_design","compare_designs","audit_wcag"],
+    "tags": ["design","tokens","css","extraction","mcp"],
+    "install_method": "npm-global",
+    "invoke": "designlang <url>",
+    "imported_at": "2026-05-25"
+  },
+  {
+    "name": "browser-harness",
+    "capabilities": ["automate_browser","scrape_page","fill_form","click_element","screenshot_page","bulk_http"],
+    "tags": ["browser","automation","scraping","CDP"],
+    "install_method": "pip",
+    "invoke": "browser-harness <<'PY' ... PY",
+    "imported_at": "2026-05-25"
+  },
+  {
+    "name": "open-design",
+    "capabilities": [],
+    "tags": ["design","workspace"],
+    "install_method": "manual",
+    "invoke": "see directives/open-design.md",
+    "smoke_test_passed": null,
+    "imported_at": "2026-05-25"
+  }
+]

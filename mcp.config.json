@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "servers": {
+    "design-extract": {
+      "type": "stdio",
+      "command": "designlang",
+      "args": ["mcp"],
+      "env_required": [],
+      "skills_that_use_this": ["design-extract"],
+      "status": "active"
+    }
+  }
+}
